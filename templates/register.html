@@ -3,26 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <title>Register | Netlink KhataBook</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body{
+            background:linear-gradient(135deg,#43e97b,#38f9d7);
+            font-family:'Segoe UI', sans-serif;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+        .card{
+            background:#fff;
+            width:380px;
+            padding:32px;
+            border-radius:18px;
+            box-shadow:0 20px 40px rgba(0,0,0,0.15);
+        }
+        .logo{
+            text-align:center;
+            font-size:22px;
+            font-weight:700;
+            margin-bottom:6px;
+        }
+        .subtitle{
+            text-align:center;
+            font-size:13px;
+            color:#777;
+            margin-bottom:25px;
+        }
+        input{
+            width:100%;
+            padding:12px;
+            border-radius:10px;
+            border:1px solid #ddd;
+            margin-bottom:14px;
+            font-size:14px;
+        }
+        button{
+            width:100%;
+            background:#43e97b;
+            color:#fff;
+            padding:12px;
+            border:none;
+            border-radius:12px;
+            font-size:15px;
+            font-weight:600;
+            cursor:pointer;
+        }
+        button:hover{
+            background:#2ecc71;
+        }
+        .link{
+            text-align:center;
+            margin-top:15px;
+            font-size:13px;
+        }
+        .link a{
+            color:#2ecc71;
+            text-decoration:none;
+            font-weight:600;
+        }
+    </style>
 </head>
 <body>
 
-<div class="auth-container">
-    <div class="auth-card">
-        <h2>Netlink KhataBook</h2>
-        <p class="subtitle">Create your account</p>
+<div class="card">
+    <div class="logo">📘 Netlink KhataBook</div>
+    <div class="subtitle">Create your business account</div>
 
-        <form method="POST">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
+    <form method="POST">
+        <input type="text" name="username" placeholder="Choose Username" required>
+        <input type="password" name="password" placeholder="Create Password" required>
 
-            <button type="submit">Create Account</button>
-        </form>
+        <button type="submit">Register</button>
+    </form>
 
-        <p class="switch">
-            Already have an account?
-            <a href="{{ url_for('login') }}">Login</a>
-        </p>
+    <div class="link">
+        Already have account? <a href="{{ url_for('login') }}">Login</a>
     </div>
 </div>
 
