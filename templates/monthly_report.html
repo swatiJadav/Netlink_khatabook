@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">📊 Monthly Report</div>
+    <a href="{{ url_for('dashboard') }}" class="logout">← Back</a>
+</div>
+
+<div style="max-width:1100px;margin:30px auto;padding:0 20px;">
+
+    <!-- MONTH SELECT -->
+    <form method="POST" style="margin-bottom:25px;">
+        <input type="month" name="month" value="{{ selected_month }}" required>
+        <button type="submit" style="margin-top:10px;">View Report</button>
+    </form>
+
+    <!-- SUMMARY -->
+    <div class="summary">
+        <div class="card credit">
+            <span>Total Credit</span>
+            <h2>₹{{ total_credit }}</h2>
+        </div>
+
+        <div class="card debit">
+            <span>Total Debit</span>
+            <h2>₹{{ total_debit }}</h2>
+        </div>
+
+        <div class="card balance">
+            <span>Net Balance</span>
+            <h2>₹{{ net_balance }}</h2>
+        </div>
+    </div>
+
+    <!-- ENTRIES -->
+    <div style="margin-top:35px;">
+        {% if data %}
+            {% for row in data %}
+            <div style="
+                background:#fff;
+                padding:16px 20px;
+                margin-bottom:12px;
+                border-radius:16px;
+                box-shadow:0 5px 18px rgba(0,0,0,0.08);
+                display:flex;
+                justify-content:space-between;
+            ">
+                <div>
+                    <strong>{{ row.person }}</strong><br>
+                    <small>{{ row.date }}</small>
+                </div>
+
+                <div style="text-align:right;">
+                    {% if row.credit > 0 %}
+                        <span style="color:#2ecc71;">+ ₹{{ row.credit }}</span>
+                    {% endif %}
+                    {% if row.debit > 0 %}
+                        <span style="color:#e74c3c;">- ₹{{ row.debit }}</span>
+                    {% endif %}
+                    <br>
+                    <small>Balance: ₹{{ row.balance }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="text-align:center;color:#777;">
+                No records for this month
+            </p>
+        {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>
