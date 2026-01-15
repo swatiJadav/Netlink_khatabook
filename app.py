@@ -1,27 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
-import sqlite3, io, os
-from datetime import date
+from flask import Flask, render_template, request, redirect, url_for, session
+import sqlite3
+from datetime import date, datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 
-# ---------- REPORTLAB ----------
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import (
-    SimpleDocTemplate, Table, TableStyle,
-    Paragraph, Image, Spacer
-)
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-
-# ---------- APP ----------
 app = Flask(__name__)
 app.secret_key = "netlink_secret_key"
 DB = "netlink.db"
-
-# ---------- FONTS (₹ SYMBOL FIX) ----------
-pdfmetrics.registerFont(TTFont("DejaVu", "DejaVuSans.ttf"))
-pdfmetrics.registerFont(TTFont("DejaVu-Bold", "DejaVuSans-Bold.ttf"))
 
 # ---------- DATABASE ----------
 def get_db():
@@ -107,18 +92,15 @@ def dashboard():
     cur = con.cursor()
 
     if request.method == "POST":
-        entry_date = request.form.get("entry_date") or str(date.today())
-        person = request.form["person"]
-
-        amount = float(request.form["amount"])
-        entry_type = request.form["type"]
+        entry_date = request.form.get("date") or date.today().isoformat()
+        person = request.form.get("name")
+        amount = float(request.form.get("amount"))
+        entry_type = request.form.get("type")
 
         credit = amount if entry_type == "credit" else 0
         debit = amount if entry_type == "debit" else 0
 
-        cur.execute(
-            "SELECT balance FROM ledger ORDER BY id DESC LIMIT 1"
-        )
+        cur.execute("SELECT balance FROM ledger ORDER BY id DESC LIMIT 1")
         last = cur.fetchone()
         last_balance = last[0] if last else 0
 
@@ -130,85 +112,93 @@ def dashboard():
         )
         con.commit()
 
-    cur.execute("SELECT * FROM ledger ORDER BY entry_date DESC")
-    entries = cur.fetchall()
-
     cur.execute("SELECT SUM(credit), SUM(debit) FROM ledger")
-    total_credit, total_debit = cur.fetchone()
-
-    total_credit = total_credit or 0
-    total_debit = total_debit or 0
-    net_balance = total_credit - total_debit
+    credit, debit = cur.fetchone()
+    credit = credit or 0
+    debit = debit or 0
+    balance = credit - debit
 
     con.close()
 
     return render_template(
         "dashboard.html",
-        entries=entries,
-        today=str(date.today()),
-        total_credit=total_credit,
-        total_debit=total_debit,
-        net_balance=net_balance
+        credit=credit,
+        debit=debit,
+        balance=balance,
+        today=date.today().isoformat()
     )
 
-# ---------- PDF DOWNLOAD ----------
-@app.route("/download_pdf")
-def download_pdf():
+# ---------- ENTRIES ----------
+@app.route("/entries")
+def entries():
     if "user" not in session:
         return redirect(url_for("login"))
 
     con = get_db()
     cur = con.cursor()
-    cur.execute("SELECT entry_date, person, credit, debit, added_by, balance FROM ledger")
+    cur.execute("SELECT * FROM ledger ORDER BY id DESC")
     rows = cur.fetchall()
     con.close()
 
-    buffer = io.BytesIO()
-    pdf = SimpleDocTemplate(buffer, pagesize=A4)
+    data = []
+    for r in rows:
+        data.append({
+            "id": r[0],
+            "date": datetime.strptime(r[1], "%Y-%m-%d").strftime("%d %b %Y"),
+            "person": r[2],
+            "credit": r[3],
+            "debit": r[4],
+            "balance": r[6]
+        })
 
-    styles = getSampleStyleSheet()
-    styles["Title"].fontName = "DejaVu-Bold"
-    styles["Normal"].fontName = "DejaVu"
+    return render_template("entries.html", data=data)
 
-    elements = []
+# ---------- MONTHLY REPORT ----------
+@app.route("/monthly-report", methods=["GET", "POST"])
+def monthly_report():
+    if "user" not in session:
+        return redirect(url_for("login"))
 
-    # ---------- LOGO ----------)
+    selected_month = request.form.get("month") or date.today().strftime("%Y-%m")
 
-    elements.append(Paragraph("Netlink Report", styles["Title"]))
-    elements.append(Spacer(1, 20))
+    con = get_db()
+    cur = con.cursor()
 
-    table_data = [["Date", "Person", "Credit", "Debit", "Added By", "Balance"]]
+    cur.execute("""
+        SELECT * FROM ledger
+        WHERE entry_date LIKE ?
+        ORDER BY entry_date DESC
+    """, (f"{selected_month}%",))
+
+    rows = cur.fetchall()
+
+    total_credit = 0
+    total_debit = 0
+    data = []
 
     for r in rows:
-        table_data.append([
-            r[0],
-            r[1],
-            f"₹ {r[2]:.2f}",
-            f"₹ {r[3]:.2f}",
-            r[4],
-            f"₹ {r[5]:.2f}"
-        ])
+        total_credit += r[3]
+        total_debit += r[4]
 
-    table = Table(table_data, repeatRows=1)
-    table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, 0), "DejaVu-Bold"),
-        ("FONTNAME", (0, 1), (-1, -1), "DejaVu"),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-    ]))
+        data.append({
+            "date": datetime.strptime(r[1], "%Y-%m-%d").strftime("%d %b %Y"),
+            "person": r[2],
+            "credit": r[3],
+            "debit": r[4],
+            "balance": r[6]
+        })
 
-    elements.append(table)
-    pdf.build(elements)
-    buffer.seek(0)
+    con.close()
 
-    return send_file(
-        buffer,
-        as_attachment=True,
-        download_name="Netlink_Khatabook_Report.pdf",
-        mimetype="application/pdf"
+    return render_template(
+        "monthly_report.html",
+        data=data,
+        total_credit=total_credit,
+        total_debit=total_debit,
+        net_balance=total_credit - total_debit,
+        selected_month=selected_month
     )
+
 
 # ---------- DELETE ----------
 @app.route("/delete/<int:id>")
@@ -221,7 +211,47 @@ def delete(id):
     cur.execute("DELETE FROM ledger WHERE id=?", (id,))
     con.commit()
     con.close()
-    return redirect(url_for("dashboard"))
+
+    return redirect(url_for("entries"))
+
+# ---------- FORGOT PASSWORD ----------
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        username = request.form["username"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        # Password match check
+        if new_password != confirm_password:
+            return "Passwords do not match"
+
+        # Hash new password
+        hashed_password = generate_password_hash(new_password)
+
+        con = get_db()
+        cur = con.cursor()
+
+        # Check user exists
+        cur.execute("SELECT * FROM users WHERE username=?", (username,))
+        user = cur.fetchone()
+
+        if not user:
+            con.close()
+            return "User not found"
+
+        # Update password
+        cur.execute(
+            "UPDATE users SET password=? WHERE username=?",
+            (hashed_password, username)
+        )
+        con.commit()
+        con.close()
+
+        return redirect(url_for("login"))
+
+    return render_template("forgot_password.html")
+
 
 # ---------- LOGOUT ----------
 @app.route("/logout")
@@ -230,4 +260,4 @@ def logout():
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
