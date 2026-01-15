@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Transactions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">📘 Netlink KhataBook</div>
+    <a href="{{ url_for('dashboard') }}" class="logout">← Back</a>
+</div>
+
+<div style="max-width:1100px; margin:30px auto; padding:0 20px;">
+
+    {% if data %}
+        {% for row in data %}
+        <div style="
+            background:#fff;
+            padding:18px 22px;
+            margin-bottom:14px;
+            border-radius:18px;
+            box-shadow:0 6px 22px rgba(0,0,0,0.08);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        ">
+
+            <div>
+                <div style="font-size:16px; font-weight:600;">
+                    {{ row.person }}
+                </div>
+                <div style="font-size:13px; color:#777;">
+                    {{ row.date }}
+                </div>
+            </div>
+
+            <div style="text-align:right;">
+                {% if row.credit > 0 %}
+                    <div style="color:#2ecc71; font-weight:600;">
+                        + ₹{{ row.credit }}
+                    </div>
+                {% endif %}
+
+                {% if row.debit > 0 %}
+                    <div style="color:#e74c3c; font-weight:600;">
+                        - ₹{{ row.debit }}
+                    </div>
+                {% endif %}
+
+                <div style="font-size:13px; margin-top:4px;">
+                    Balance: ₹{{ row.balance }}
+                </div>
+
+                <div style="margin-top:6px;">
+                    <a href="{{ url_for('delete', id=row.id) }}"
+                       onclick="return confirm('Delete this entry?')"
+                       style="text-decoration:none;font-size:12px;color:#e74c3c;font-weight:600;">
+                        🗑 Delete
+                    </a>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="text-align:center;color:#777;margin-top:50px;">
+            No transactions found
+        </p>
+    {% endif %}
+
+</div>
+
+</body>
+</html>
