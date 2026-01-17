@@ -6,14 +6,16 @@
 
 body {
     margin: 0;
-    background: #f4f6fb;
-    color: #333;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    background: #f4f6f9;
 }
 
 /* ================= HEADER ================= */
 .header {
     background: #ffffff;
-    padding: 16px 30px;
+    padding: 14px 16px;              /* 🔹 mobile padding */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -24,7 +26,7 @@ body {
 }
 
 .logo {
-    font-size: 20px;
+    font-size: 18px;                 /* 🔹 mobile size */
     font-weight: 600;
 }
 
@@ -32,73 +34,67 @@ body {
     text-decoration: none;
     color: #e74c3c;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* ================= SUMMARY CARDS ================= */
 .summary {
+    width: 100%;                     /* ✅ FULL WIDTH */
     max-width: 1100px;
-    margin: 25px auto 0;
+    margin: 20px auto 0;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    padding: 0 20px;
+    gap: 14px;                       /* 🔹 mobile gap */
+    padding: 0 15px;
 }
 
 /* ================= PROFESSIONAL SUMMARY CARDS ================= */
 .card {
     background: #ffffff;
-    padding: 22px;
-    border-radius: 18px;
+    padding: 20px;
+    border-radius: 16px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     border-left: 6px solid;
 }
 
 .card span {
-    font-size: 14px;
+    font-size: 13px;
     color: #777;
 }
 
 .card h2 {
-    margin: 12px 0 0;
-    font-size: 26px;
+    margin-top: 10px;
+    font-size: 22px;                 /* 🔹 mobile font */
     font-weight: 600;
     color: #222;
 }
 
 /* LEFT COLOR STRIP */
-.card.credit {
-    border-color: #2ecc71;
-}
-
-.card.debit {
-    border-color: #e74c3c;
-}
-
-.card.balance {
-    border-color: #3498db;
-}
+.card.credit { border-color: #2ecc71; }
+.card.debit  { border-color: #e74c3c; }
+.card.balance{ border-color: #3498db; }
 
 /* ================= CENTER MAIN AREA ================= */
 .main-center {
     display: flex;
     justify-content: center;
-    margin: 40px 0;
-    padding: 0 20px;
+    margin: 25px 0;
+    padding: 0 15px;
 }
 
 /* ================= FORM CARD ================= */
 .form-card {
-    width: 420px;
+    width: 100%;                     /* ✅ MOBILE FULL WIDTH */
+    max-width: 420px;
     background: #ffffff;
-    padding: 28px;
-    border-radius: 22px;
+    padding: 22px;
+    border-radius: 20px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.12);
 }
 
 .form-card h3 {
-    margin-bottom: 22px;
-    font-size: 18px;
+    margin-bottom: 18px;
+    font-size: 17px;
     font-weight: 600;
 }
 
@@ -110,14 +106,13 @@ input, select {
     border-radius: 12px;
     border: 1px solid #ddd;
     font-size: 14px;
-    outline: none;
 }
 
 input:focus, select:focus {
     border-color: #3498db;
 }
 
-/* ADD BUTTON */
+/* BUTTONS */
 button {
     width: 100%;
     padding: 13px;
@@ -128,17 +123,12 @@ button {
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.2s;
 }
 
-button:hover {
-    background: #2c80b4;
-}
-
-/* VIEW TRANSACTIONS BUTTON */
+/* VIEW BUTTON */
 .view-btn {
     display: block;
-    margin-top: 18px;
+    margin-top: 16px;
     text-align: center;
     padding: 11px;
     background: #f2f4f8;
@@ -146,16 +136,20 @@ button:hover {
     text-decoration: none;
     color: #333;
     font-size: 14px;
-    font-weight: 500;
 }
 
-/* ================= RESPONSIVE ================= */
+/* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 768px) {
+
     .summary {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr;  /* 📱 vertical cards */
     }
 
-    .form-card {
-        width: 100%;
+    .card h2 {
+        font-size: 20px;
+    }
+
+    .header {
+        padding: 12px 14px;
     }
 }
