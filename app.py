@@ -39,8 +39,6 @@ def init_db():
 
 init_db()
 
-# ---------- DASHBOARD (HOME) ----------
-@app.route("/")
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
 
@@ -64,10 +62,15 @@ def dashboard():
 
         cur.execute(
             "INSERT INTO ledger VALUES (NULL,?,?,?,?,?,?)",
-            (entry_date, person, credit, debit, "NetLink Team", balance)
+            (entry_date, person, credit, debit, "partner", balance)
         )
         con.commit()
+        con.close()
 
+        # 🔥 MOST IMPORTANT LINE
+        return redirect(url_for("dashboard"))
+
+    # ---------- GET ----------
     cur.execute("SELECT SUM(credit), SUM(debit) FROM ledger")
     credit, debit = cur.fetchone()
     credit = credit or 0
@@ -83,6 +86,7 @@ def dashboard():
         balance=balance,
         today=date.today().isoformat()
     )
+
 
 # ---------- ENTRIES ----------
 @app.route("/entries")
@@ -166,3 +170,4 @@ def delete(id):
 # ---------- RUN ----------
 if __name__ == "__main__":
     app.run(debug=True)
+
