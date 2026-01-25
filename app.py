@@ -1,11 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 from datetime import date, datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.security import generate_password_hash
 
 app = Flask(__name__)
-app.secret_key = "netlink_secret_key"
 DB = "netlink.db"
 
 # ---------- DATABASE ----------
@@ -16,6 +13,7 @@ def init_db():
     con = get_db()
     cur = con.cursor()
 
+    # Users table OPTIONAL (future ke liye, ab use nahi ho rahi)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,52 +39,10 @@ def init_db():
 
 init_db()
 
-# ---------- REGISTER ----------
-@app.route("/", methods=["GET", "POST"])
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
-
-        try:
-            con = get_db()
-            cur = con.cursor()
-            cur.execute("INSERT INTO users VALUES (NULL,?,?)", (username, password))
-            con.commit()
-            con.close()
-            return redirect(url_for("login"))
-        except:
-            return "Username already exists"
-
-    return render_template("register.html")
-
-# ---------- LOGIN ----------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        con = get_db()
-        cur = con.cursor()
-        cur.execute("SELECT * FROM users WHERE username=?", (username,))
-        user = cur.fetchone()
-        con.close()
-
-        if user and check_password_hash(user[2], password):
-            session["user"] = username
-            return redirect(url_for("dashboard"))
-        else:
-            return "Invalid login"
-
-    return render_template("login.html")
-
-# ---------- DASHBOARD ----------
+# ---------- DASHBOARD (HOME) ----------
+@app.route("/")
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
-    if "user" not in session:
-        return redirect(url_for("login"))
 
     con = get_db()
     cur = con.cursor()
@@ -108,7 +64,7 @@ def dashboard():
 
         cur.execute(
             "INSERT INTO ledger VALUES (NULL,?,?,?,?,?,?)",
-            (entry_date, person, credit, debit, session["user"], balance)
+            (entry_date, person, credit, debit, "NetLink Team", balance)
         )
         con.commit()
 
@@ -131,8 +87,6 @@ def dashboard():
 # ---------- ENTRIES ----------
 @app.route("/entries")
 def entries():
-    if "user" not in session:
-        return redirect(url_for("login"))
 
     con = get_db()
     cur = con.cursor()
@@ -156,8 +110,6 @@ def entries():
 # ---------- MONTHLY REPORT ----------
 @app.route("/monthly-report", methods=["GET", "POST"])
 def monthly_report():
-    if "user" not in session:
-        return redirect(url_for("login"))
 
     selected_month = request.form.get("month") or date.today().strftime("%Y-%m")
 
@@ -199,12 +151,9 @@ def monthly_report():
         selected_month=selected_month
     )
 
-
 # ---------- DELETE ----------
 @app.route("/delete/<int:id>")
 def delete(id):
-    if "user" not in session:
-        return redirect(url_for("login"))
 
     con = get_db()
     cur = con.cursor()
@@ -214,50 +163,6 @@ def delete(id):
 
     return redirect(url_for("entries"))
 
-# ---------- FORGOT PASSWORD ----------
-@app.route("/forgot-password", methods=["GET", "POST"])
-def forgot_password():
-    if request.method == "POST":
-        username = request.form["username"]
-        new_password = request.form["new_password"]
-        confirm_password = request.form["confirm_password"]
-
-        # Password match check
-        if new_password != confirm_password:
-            return "Passwords do not match"
-
-        # Hash new password
-        hashed_password = generate_password_hash(new_password)
-
-        con = get_db()
-        cur = con.cursor()
-
-        # Check user exists
-        cur.execute("SELECT * FROM users WHERE username=?", (username,))
-        user = cur.fetchone()
-
-        if not user:
-            con.close()
-            return "User not found"
-
-        # Update password
-        cur.execute(
-            "UPDATE users SET password=? WHERE username=?",
-            (hashed_password, username)
-        )
-        con.commit()
-        con.close()
-
-        return redirect(url_for("login"))
-
-    return render_template("forgot_password.html")
-
-
-# ---------- LOGOUT ----------
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
-
+# ---------- RUN ----------
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
